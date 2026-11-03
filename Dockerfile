@@ -1,5 +1,13 @@
-FROM eclipse-temurin:25-jre
+# Build stage
+FROM gradle:8.10-jdk21 AS build
 WORKDIR /app
-COPY build/libs/docker-deploy-1.0.0.jar app.jar
+COPY build.gradle.kts settings.gradle.kts ./
+COPY src ./src
+RUN gradle build --no-daemon -x test
+
+# Run stage
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
